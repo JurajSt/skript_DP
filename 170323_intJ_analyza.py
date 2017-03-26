@@ -1,8 +1,10 @@
-# coding=utf-8
+
 import sys
 import os
 import modul2
 import math
+import numpy as np
+import matplotlib.pyplot as plt
 
 ## epresne efemeridy
 cesta_eph = os.path.join("../data/vstup/cod19212.eph")  # cof19196.eph
@@ -10,12 +12,12 @@ if not os.path.exists(cesta_eph):
     print "subor eph neexistuje"
     sys.exit()
 ## navigacna sprava
-cesta_nav = os.path.join("../data/vstup/ganp3510.15n")  # gan60.16n gope0480.14n
+cesta_nav = os.path.join("../data/vstup/ganp3060.16n")  # gan60.16n gope0480.14n
 if not os.path.exists(cesta_nav):
     print "subor nav neexistuje"
     sys.exit()
 # observacne data
-cesta_obs = os.path.join("../data/vstup/ganp3510.15o")
+cesta_obs = os.path.join("../data/vstup/ganp3060.16o")
 if not os.path.exists(cesta_obs):
     print "subor neexistuje"
     sys.exit()
@@ -39,7 +41,7 @@ for znak in cesta_nav:
     if "/" in znak:
         pocetNav = pocetNav + 1
 nazovNav = cesta_nav.split("/")[pocetNav].split(".")[0]
-## xls vystup
+## xls porovnanie vystup
 koncovka_xls = ".xls"
 ##nazov_xls = nazovEph + "_" + nazovNav + koncovka_xls
 ##cesta_vystup_xls = "../data/vystup/" + nazov_xls
@@ -63,7 +65,7 @@ nazov_obs = nazovObs + "_linElevS1" + koncovka_xls
 cesta_vystup_xls = "../data/vystup/" + nazov_obs
 data_vystup_xls = os.path.join(cesta_vystup_xls)  # vystup xls
 xls_obs = open(data_vystup_xls, "w")
-xls_obs.write("CD\tcas\tsin_elevUhol\tSRN\n")
+xls_obs.write("CD\tcas\tsin_elevUhol\tSRN1\tSRN_lin1\tSRN2\tSRN_lin2\n")
 ## txt vystup pre efemeridy
 ##nazov_eph_txt = nazovNav+"_eph"
 ##cesta_vystup_eph_txt = "../data/vystup/"+nazov_eph_txt+koncovka_txt
@@ -77,19 +79,60 @@ while "*" is not subor_eph[i][0]:
     i = i + 1
 telo_eph = subor_eph[i:]
 ## ##########################################################
-## ganp aprox
-X = 3929181.900
-Y = 1455236.500
-Z = 4793653.800
-dr = "PG23"
+# nacitanie udajov z hlavicky observacii
+hlavicka_obs = []
+for data in subor_obs:
+    hlavicka_obs.append(data)
+    if "END" in data:
+        ##        print data
+        break
+
+    ts1 = ""
+    TappPosXYZ = "APPROX POSITION XYZ"
+    Tant = "ANTENNA: DELTA H/E/N"
+    Tint = "INTERVAL"
+    TObs = "# / TYPES OF OBSERV"
+    TfObs = "TIME OF FIRST OBS"
+
+    ##print hlavicka
+    for data in hlavicka_obs:
+        if "APPROX POSITION XYZ" in data:
+            appPosXYZ = data[0:(len(data) - (len(TappPosXYZ) + 1))]
+        if "ANTENNA: DELTA H/E/N" in data:
+            antHEN = data[0:(len(data) - (len(Tant) + 1))]
+        if "INTERVAL" in data:
+            interval = float(data[0:(len(data) - (len(Tint) + 1))])
+        if "# / TYPES OF OBSERV" in data:
+            typObs = data[0:(len(data) - (len(TObs) + 1))]
+            ts = typObs + " "
+            ts1 = ts1 + ts
+        if "TIME" in data:
+            firstObs = data[0:(len(data) - (len(TfObs) + 1))]
+
+first_observ = firstObs.split()
+appPos_XYZ = appPosXYZ.split()
+ant_HEN = antHEN.split()
+typ_observ = ts1.split()
+pocet_kan = int(typ_observ[0])
+typ_observ.remove(typ_observ[0])
+# print "pocet kanalov:", pocet_kan
+# print "suradnice XYZ:", appPos_XYZ
+# print "pocet a signaly:", typ_observ
+# print "prva observacia:", first_observ
+# print "interval observacii", interval
+# print "vysky anteny", ant_HEN
+X = float(appPos_XYZ[0])
+Y = float(appPos_XYZ[1])
+Z = float(appPos_XYZ[2])
+dr = "PG22"
 ## ##########################################################
 ## nacitanie udajov z navigacnej spravy
-hlavicka = []
+hlavicka_nav = []
 for data in subor_nav:
-    hlavicka.append(data)
+    hlavicka_nav.append(data)
     if "END" in data:
         break
-telo_nav = subor_nav[len(hlavicka):]
+telo_nav = subor_nav[len(hlavicka_nav):]
 # print telo_nav
 hodnoty = []
 q = 0
@@ -165,11 +208,11 @@ while k < len(hodnoty):
         ##zapis1 = zapis + str(poloha[0]) + "\t" + str(poloha[1]) + "\t" + str(poloha[2]) + "\t"
         ##zapis2 = zapis1 + str(Rx) + "\t" + str(Ry) + "\t" + str(Rz) + "\t" + str(vektor) + "\n"
         ##xls.write(zapis2)  # zapis vyslednych hodnot xls
+        BLHd = modul2.fXYZ_to_LatLonH(poloha[0], poloha[1], poloha[2])
         zapis_txt = cd_nav + " " + str(cas_nav + Dt) + " " + str(cas_nav) + " " + str(
             Dt) + " " + str(poloha[0]) + " " + str(poloha[1]) + " " + str(
             poloha[2]) + "\n"  # zapis vyslednych hodnot txt
         txt.write(zapis_txt)
-
         ##  vypocet elevacneho uhlu
         Xd = poloha[0]
         Yd = poloha[1]
@@ -177,81 +220,55 @@ while k < len(hodnoty):
         dx = Xd - X
         dy = Yd - Y
         dz = Zd - Z
-        #print dx, dy,dz
-        l1 = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2)) # priemet družice do výšky ref.stanice
+        l1 = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))  # priemet druzice do vysky ref.stanice
         l2 = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2) + math.pow(dz, 2))
-        a_rad = math.acos(l1/l2)
-        #sina = dz/l2 - kontrola
+        a_rad = math.acos(l1 / l2)
+        # print a_rad
+        # sina = dz/l2 - kontrola
         a = math.degrees(a_rad)
-        if a >= 5 and a <= 30:
-            data.append(cd_nav)
-            data.append(cas_nav)
-            data.append(Dt)
-            data.append(Xd)
-            data.append(Yd)
-            data.append(Zd)
-            data.append(a)
-            data_all.append(data)
-        Dt = Dt + 30
-        ##print k
+        data.append(cd_nav)
+        data.append(cas_nav)
+        data.append(Dt)
+        data.append(Xd)
+        data.append(Yd)
+        data.append(Zd)
+        data.append(a_rad)
+        data_all.append(data)
+        # if a >= 5 and a <= 30:
+        #    data.append(cd_nav)
+        #    data.append(cas_nav)
+        #    data.append(Dt)
+        #    data.append(Xd)
+        #    data.append(Yd)
+        #    data.append(Zd)
+        #    data.append(a_rad)
+        #    data_all.append(data)
+        Dt = Dt + interval
+        # print k
     k = k + 1
-##xls.close()
+# xls.close()
 txt.close()
 ##txt_eph.close()
 ##print vektor_max
 ##print vektor_min
 ##print data_all[0]
 # ##########################################################
-# nacitanie udajov z hlavicky observacii
-hlavicka = []
-for data in subor_obs:
-    hlavicka.append(data)
-    if "END" in data:
-        ##        print data
-        break
 
-    ts1 = ""
-    TappPosXYZ = "APPROX POSITION XYZ"
-    Tant = "ANTENNA: DELTA H/E/N"
-    Tint = "INTERVAL"
-    TObs = "# / TYPES OF OBSERV"
-    TfObs = "TIME OF FIRST OBS"
-
-    ##print hlavicka
-    for data in hlavicka:
-        if "APPROX POSITION XYZ" in data:
-            appPosXYZ = data[0:(len(data) - (len(TappPosXYZ) + 1))]
-        if "ANTENNA: DELTA H/E/N" in data:
-            antHEN = data[0:(len(data) - (len(Tant) + 1))]
-        if "INTERVAL" in data:
-            interval = float(data[0:(len(data) - (len(Tint) + 1))])
-        if "# / TYPES OF OBSERV" in data:
-            typObs = data[0:(len(data) - (len(TObs) + 1))]
-            ts = typObs + " "
-            ts1 = ts1 + ts
-        if "TIME" in data:
-            firstObs = data[0:(len(data) - (len(TfObs) + 1))]
-
-first_observ = firstObs.split()
-appPos_XYZ = appPosXYZ.split()
-ant_HEN = antHEN.split()
-typ_observ = ts1.split()
-pocet_kan = int(typ_observ[0])
-typ_observ.remove(typ_observ[0])
-# print "pocet kanalov:", pocet_kan
-# print "suradnice XYZ:", appPos_XYZ
-# print "pocet a signaly:", typ_observ
-# print "prva observacia:", first_observ
-# print "interval observacii", interval
-# print "vysky anteny", ant_HEN
-
-len_hlavicka = len(hlavicka)
-telo = subor_obs[len_hlavicka:]
+len_hlavicka_obs = len(hlavicka_obs)
+telo = subor_obs[len_hlavicka_obs:]
 i = 0
 signalS1 = "S1"
-index_signal = typ_observ.index(signalS1)
+signalS2 = "S2"
+index_signalS1 = typ_observ.index(signalS1)
+index_signalS2 = typ_observ.index(signalS2)
 dlzka_zaznam = 16  # dlzka zaznamu je 16 >> na riadku je 5 zaznamov s celkovou dlzkou 80
-index_obs = index_signal * dlzka_zaznam
+index_obsS1 = index_signalS1 * dlzka_zaznam
+index_obsS2 = index_signalS2 * dlzka_zaznam
+axisXelevUhol = []
+axisXsinElevUhol = []
+axisXcas = []
+axisYSNR1 = []
+axisYSNR2 = []
 while len(telo) > 0:
     data_obs = modul2.fObservacie(telo, pocet_kan)
     for j in range(len(data_all)):
@@ -277,20 +294,60 @@ while len(telo) > 0:
                 continue
                 # break
             observacia = data_obs[1][c]
-            zaznam_obs = observacia[index_obs:index_obs + dlzka_zaznam].split()
-            #print zaznam_obs
-            if len(zaznam_obs) > 0:
-                for cislo in zaznam_obs:
+            zaznam_obsS1 = observacia[index_obsS1:index_obsS1 + dlzka_zaznam].split()
+            zaznam_obsS2 = observacia[index_obsS2:index_obsS2 + dlzka_zaznam].split()
+            # print zaznam_obs
+            if len(zaznam_obsS1) > 0:
+                for cislo in zaznam_obsS1:
                     # print cislo
                     if len(cislo) < 2:
-                        zaznam_obs.remove(cislo)
-            elif len(zaznam_obs) == 0:
+                        zaznam_obsS1.remove(cislo)
+            elif len(zaznam_obsS1) == 0:
                 break
-            snr1 = float(zaznam_obs[0])
+            snr1 = float(zaznam_obsS1[0])
+            snr_lin1 = math.pow(10, (snr1 / 20))
             # print snr1
-            # snr_lin1 = math.pow(10,(snr1/20))
-            zapis = cd_obs + "\t" + str(cas_obs) + "\t" + str(sin_elev_uhol) + "\t" + str(snr1) + "\n"  # snr_lin1
+            if len(zaznam_obsS2) > 0:
+                for cislo in zaznam_obsS1:
+                    # print cislo
+                    if len(cislo) < 2:
+                        zaznam_obsS2.remove(cislo)
+            elif len(zaznam_obsS2) == 0:
+                break
+            snr2 = float(zaznam_obsS2[0])
+            axisXcas.append(cas / 60 / 60)
+            axisXelevUhol.append(math.degrees(elev_uhol))
+            axisXsinElevUhol.append(sin_elev_uhol)
+            axisYSNR1.append(snr1)
+            axisYSNR2.append(snr2)
+            snr_lin2 = math.pow(10, (snr2 / 20))
+            zapis = cd_obs.replace(".", ",") + "\t" + str(cas_obs).replace(".", ",") + "\t" + str(
+                sin_elev_uhol).replace(".", ",") + \
+                    "\t" + str(snr1).replace(".", ",") + "\t" + str(snr_lin1).replace(".", ",") + \
+                    "\t" + str(snr2).replace(".", ",") + "\t" + str(snr_lin2).replace(".", ",") + "\n"  # snr_lin1
             ##print zapis
             xls_obs.write(zapis)
             break
 xls_obs.close()
+maxElevUhol = max(axisXsinElevUhol)
+minElevUhol = min(axisXsinElevUhol)
+maxCas = max(axisXcas)
+minCas = min(axisXcas)
+maxSNR1 = max(axisYSNR1)
+maxSNR2 = max(axisYSNR2)
+
+plt.figure(1)
+plt.plot(axisXelevUhol, axisYSNR1)
+plt.xlabel('stupne')
+plt.ylabel('SNR 1')
+plt.axis([minElevUhol, maxElevUhol, 0, maxSNR1 + 5])
+plt.grid(True)
+plt.savefig('SNR1')
+
+plt.figure(2)
+plt.plot(axisXelevUhol, axisYSNR2)
+plt.xlabel('stupne')
+plt.ylabel('SNR 2')
+plt.axis([minElevUhol, maxElevUhol, 0, maxSNR2 + 5])
+plt.grid(True)
+plt.savefig('SNR2')

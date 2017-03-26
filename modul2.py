@@ -1,5 +1,95 @@
 import math
 import os, sys
+
+import math
+import os
+import sys
+#-------------------------------------------------------------------------------
+#prevod XYZ do geografickych souradnic, pokud se vezmou souradnice z TRO, presnost
+#zpetne trasnformace do XYZ je dle testovani do 1 mm ve vsech slozkach souradnic
+#postup prevzat z Hoffman-Wellenhof, provadi se dve iterace
+def fXYZ_to_LatLonH(X,Y,Z):
+    X=float(X)
+    Y=float(Y)
+    Z=float(Z)
+
+    a=6378137.0
+    b=6356752.3142
+    e_2=((a*a)-(b*b))/(a*a)
+    e=math.sqrt(e_2)
+
+    lon = math.atan(Y/X)
+    lon_degrees = math.degrees(lon)
+
+    p = math.sqrt(X*X+Y*Y)
+
+    lat0=math.atan((Z/p)*(1/(1-e_2)))
+    cos2lat0 = (1+math.cos(2*lat0))/2
+    sin2lat0 = (1-math.cos(2*lat0))/2
+    N0 = (a*a)/math.sqrt(a*a*cos2lat0 + b*b*sin2lat0)
+    h0=(p/math.cos(lat0))-N0
+    lat1=math.atan((Z/p)*(1/(1-(e_2)*(N0/(N0+h0)))))
+
+    cos2lat1 = (1+math.cos(2*lat1))/2
+    sin2lat1 = (1-math.cos(2*lat1))/2
+    N1 = (a*a)/math.sqrt(a*a*cos2lat1 + b*b*sin2lat1)
+    h1=(p/math.cos(lat1))-N1
+    lat2=math.atan((Z/p)*(1/(1-(e_2)*(N1/(N1+h1)))))
+    lat2_degrees = math.degrees(lat2)
+
+    cos2lat2 = (1+math.cos(2*lat2))/2
+    sin2lat2 = (1-math.cos(2*lat2))/2
+    N2 = (a*a)/math.sqrt(a*a*cos2lat2 + b*b*sin2lat2)
+    h2=(p/math.cos(lat2))-N2
+    lat3=math.atan((Z/p)*(1/(1-(e_2)*(N2/(N2+h2)))))
+    lat3_degrees = math.degrees(lat3)
+
+    if X < 0:
+        lon_degrees = lon_degrees + 180
+
+    return lat3_degrees, lon_degrees, h2
+
+def fLatLonH_to_XYZ(B,L,H):
+
+    a=6378137.0
+    b=6356752.3142
+    e_2=((a*a)-(b*b))/(a*a)
+    B = math.radians(float(B))
+    L = math.radians(float(L))
+
+    N = a/math.sqrt(1-e_2*math.pow(math.sin(B),2))
+
+    X = (N+H)*math.cos(B)*math.cos(L)
+    Y = (N+H)*math.cos(B)*math.sin(L)
+    Z = (N*(1-e_2)+H)*math.sin(B)
+
+    return X, Y, Z
+
+# zistuje uhol medzi priamkou ktora je tvorena suradnicami stanice a
+# suradnicami stanice prepocitane z BL (bez elipsoidickej vysky),
+# druha priamka je tvorena suradnicami stanice a druzice
+def fUhol_priamok(Bod_X,Bod_Y,Bod_Z, X, Y, Z, ):
+
+    dx = X-Bod_X
+    dy = Y-Bod_Y
+    dz = Z-Bod_Z
+    dlzka = math.sqrt(math.pow(dx,2) + math.pow(dy,2) + math.pow(dz,2))
+
+    bodBLH = fXYZ_to_LatLonH(Bod_X, Bod_Y, Bod_Z)
+    Bod_B = bodBLH[0]
+    Bod_L = bodBLH[1]
+    bod_elipsoid = fLatLonH_to_XYZ(Bod_B, Bod_L, 0)
+
+    dx_bod = bod_elipsoid[0] - Bod_X
+    dy_bod = bod_elipsoid[1] - Bod_Y
+    dz_bod = bod_elipsoid[2] - Bod_Z
+    dlzka_bod = math.sqrt(math.pow(dx_bod,2) + math.pow(dy_bod,2) + math.pow(dz_bod,2))
+
+    uhol_rad = -1*((dx*dx_bod + dy*dy_bod + dz*dz_bod)/(dlzka*dlzka_bod))
+    uhol_stupne = math.degrees(uhol_rad)
+
+    return uhol_stupne
+
 def fvypocet_poloha(g, Dt):
     # konstanty
     sprava = []
@@ -87,7 +177,6 @@ def fvypocet_poloha(g, Dt):
 ##    pole_XYZ.append(Z)
 
     return X, Y, Z
-
 
 def fData_EPH(telo_eph, cd_nav, cas_sekundy_nav):
     for data_eph in telo_eph:

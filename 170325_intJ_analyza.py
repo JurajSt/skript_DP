@@ -1,4 +1,3 @@
-
 import sys
 import os
 import modul2
@@ -37,7 +36,7 @@ zoznam_farieb = 'ff4672eb', 'ffda6e6f', 'ff9b26d7', 'ff941645', 'ffff220f', 'ffe
 koncovka_xls = ".xls"
 koncovka_txt = ".txt"
 koncovka_kml = ".kml"
-nazov = modul2.fnazov(cesta_nav)    # funkcia vracia nazov vstupneho suboru
+nazov = modul2.fnazov(cesta_nav)  # funkcia vracia nazov vstupneho suboru
 nazov_eph = modul2.fnazov(cesta_eph)
 # xls - porovnanie eph a vypocitane suradnice druzice
 cesta_vystup_xls_porovnanie = "../data/vystup/" + nazov + nazov_eph + "_porovnanie" + koncovka_xls
@@ -48,17 +47,14 @@ txt_poloha_d = open(cesta_vystup_txt_poloha_d, "w")
 # xls - vytup s observacnymi datami priradenych druzici + suradnice XYZ, BLH
 cesta_vystup_xls_obs = "../data/vystup/" + nazov + koncovka_xls
 xls_obs = open(cesta_vystup_xls_obs, "w")
-# txt - vystup pre efemeridy
-cesta_vystup_eph_txt = "../data/vystup/"+ nazov + nazov_eph + koncovka_txt
-txt_eph = open(cesta_vystup_eph_txt,"w")
 # kml - vystup pre kontrolu
-cesta_vystup_kml = "../data/vystup/"+ nazov + koncovka_kml
-kml = open(cesta_vystup_kml,"w")
+cesta_vystup_kml = "../data/vystup/" + nazov + koncovka_kml
+kml = open(cesta_vystup_kml, "w")
 # zapis haviciek
-xls_obs.write("CD\tcas\tsin_elevUhol\tstupne\tSRN1\tSRN_lin1\tSRN2\tSRN_lin2\tXd\tYd\tZd\tBd\tLd\tHd\n")
-xls_porovnanie.write("CD_eph\tCD_nav\tcas_eph\tcas_nav\tDt\tXeph\tYeph\tZeph\tXvyp\tYvyp\tZvyp\tXroz\tYroz\tZroz\tVektor\n")
+xls_obs.write("CD\tcas\tsin_elevUhol\tstupne\tSRN1\tSRN_lin1\tSRN2\tSRN_lin2\tXd\tYd\tZd\tBd\tLd\tHd\tazimut\td\n")
+xls_porovnanie.write(
+    "CD_eph\tCD_nav\tcas_eph\tcas_nav\tDt\tXeph\tYeph\tZeph\tXvyp\tYvyp\tZvyp\tXroz\tYroz\tZroz\tVektor\n")
 txt_poloha_d.write("Cislo_druzice cas_eph cas_nav Dt X_vyp Y_vyp Z_vyp\n")
-txt_eph.write("Cislo_druzice cas_eph X_vyp Y_vyp Z_vyp\n")
 kml.write('''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://earth.google.com/kml/2.0">
 <Document>\n''')
@@ -114,7 +110,7 @@ typ_observ.remove(typ_observ[0])
 X = float(appPos_XYZ[0])
 Y = float(appPos_XYZ[1])
 Z = float(appPos_XYZ[2])
-BLH_stanica = modul2.fXYZ_to_LatLonH(X,Y,Z)
+BLH_stanica = modul2.fXYZ_to_LatLonH(X, Y, Z)
 B = BLH_stanica[0]
 L = BLH_stanica[1]
 H = BLH_stanica[2]
@@ -140,7 +136,7 @@ k = 0
 
 vektor_max = 0
 vektor_min = 9999999
-
+kontrola = modul2.fEph_zapis(telo_eph, nazov, nazov_eph, koncovka_txt)
 data_all = []
 while k < len(hodnoty):
     sprava = hodnoty[k]  # nacitanie jednej spravy
@@ -165,45 +161,45 @@ while k < len(hodnoty):
     min_nav = int(sprava[0].split()[5])
     sek_nav = float(sprava[0].replace("-", " -").split()[6])
     cas_nav = (hod_nav * 60 * 60) + (min_nav * 60) + sek_nav
+
     dodatok = (60 - sek_nav)
     Dt = 0
     if dodatok < 60:  # niektore spravy su nemaju celi cas napr: 11:59:44... do vypoctu treba zahrnut
         Dt = Dt + dodatok
     else:
         dodatok = 0
-    #kontrola = modul2.fEph_zapis(telo_eph, nazov_eph_txt, koncovka_txt)
     while Dt < (platnost_spravy + dodatok):
         data = []
         poloha = modul2.fvypocet_poloha(sprava, Dt)  # vypocet polohy druzice v zadanom case Dt
-        ##EPH = modul2.fData_EPH(telo_eph, cd_nav, (cas_nav + Dt))
-        ##if EPH == "konec zaznamu":
-        ##    break
-        ##rok_eph = int(str(EPH[2])[2:])
-        ##mes_eph = EPH[3]
-        ##den_eph = EPH[4]
-        ##if rok_eph != rok_nav or mes_eph != mes_nav or den_eph != den_nav:
-        ##break
-        ##        print rok_eph, den_eph
-        ##X_eph = float(EPH[0][1]) * 1000
-        ##Y_eph = float(EPH[0][2]) * 1000
-        ##Z_eph = float(EPH[0][3]) * 1000
-        ##cd_eph = str(EPH[0][0])
-        ##cas_eph = EPH[1]
-        ##Rx = X_eph - poloha[0]
-        ##Ry = Y_eph - poloha[1]
-        ##Rz = Z_eph - poloha[2]
-        ##vektor = math.sqrt(math.pow(Rx, 2) + math.pow(Ry, 2) + math.pow(Rz, 2))
-        ##if vektor > vektor_max:
-        ##   vektor_max = vektor
-        ##if vektor < vektor_min:
-        ##    vektor_min = vektor
+        # EPH = modul2.fData_EPH(telo_eph, cd_nav, (cas_nav + Dt))
+        # if EPH == "konec zaznamu":
+        #    break
+        # rok_eph = int(str(EPH[2])[2:])
+        # mes_eph = EPH[3]
+        # den_eph = EPH[4]
+        # if rok_eph != rok_nav or mes_eph != mes_nav or den_eph != den_nav:
+        #    break
+        #        print rok_eph, den_eph
+        # X_eph = float(EPH[0][1]) * 1000
+        # Y_eph = float(EPH[0][2]) * 1000
+        # Z_eph = float(EPH[0][3]) * 1000
+        # cd_eph = str(EPH[0][0])
+        # cas_eph = EPH[1]
+        # Rx = X_eph - poloha[0]
+        # Ry = Y_eph - poloha[1]
+        # Rz = Z_eph - poloha[2]
+        # vektor = math.sqrt(math.pow(Rx, 2) + math.pow(Ry, 2) + math.pow(Rz, 2))
+        # if vektor > vektor_max:
+        #   vektor_max = vektor
+        # if vektor < vektor_min:
+        #    vektor_min = vektor
 
-        ##zapis = cd_eph + "\t" + str(cd_nav) + "\t" + str(cas_eph) + "\t" + str(cas_nav) + "\t" + str(
-        ##    Dt) + "\t" + str(X_eph) + "\t" + str(Y_eph) + "\t" + str(Z_eph) + "\t"
-        ##zapis1 = zapis + str(poloha[0]) + "\t" + str(poloha[1]) + "\t" + str(poloha[2]) + "\t"
-        ##zapis2 = zapis1 + str(Rx) + "\t" + str(Ry) + "\t" + str(Rz) + "\t" + str(vektor) + "\n"
+        # zapis = cd_eph + "\t" + str(cd_nav) + "\t" + str(cas_eph) + "\t" + str(cas_nav) + "\t" + str(
+        #    Dt) + "\t" + str(X_eph) + "\t" + str(Y_eph) + "\t" + str(Z_eph) + "\t"
+        # zapis1 = zapis + str(poloha[0]) + "\t" + str(poloha[1]) + "\t" + str(poloha[2]) + "\t"
+        # zapis2 = zapis1 + str(Rx) + "\t" + str(Ry) + "\t" + str(Rz) + "\t" + str(vektor) + "\n"
         # xls_porovnanie.write(zapis2)  # zapis vyslednych hodnot xls
-        #BLHd = modul2.fXYZ_to_LatLonH(poloha[0], poloha[1], poloha[2])
+        # BLHd = modul2.fXYZ_to_LatLonH(poloha[0], poloha[1], poloha[2])
         zapis_txt = cd_nav + " " + str(cas_nav + Dt) + " " + str(cas_nav) + " " + str(
             Dt) + " " + str(poloha[0]) + " " + str(poloha[1]) + " " + str(
             poloha[2]) + "\n"  # zapis vyslednych hodnot txt
@@ -238,9 +234,8 @@ while k < len(hodnoty):
         Dt = Dt + interval
         # print k
     k = k + 1
-# xls.close()
+xls_porovnanie.close()
 txt_poloha_d.close()
-#txt_eph.close()
 ##print vektor_max
 ##print vektor_min
 ##print data_all[0]
@@ -261,14 +256,18 @@ axisXsinElevUhol = []
 axisXcas = []
 axisYSNR1 = []
 axisYSNR2 = []
+ortodroma = []
+azimut = 0
+d = 0
+r = 6378.135    # polomer zeme v km
 while len(telo) > 0:
     data_obs = modul2.fObservacie(telo, pocet_kan)
     for j in range(len(data_all)):
+        sur_ort = []
         cas_nav = data_all[j][1]
         Dt = data_all[j][2]
         cas_obs = data_obs[0][3]
         cas = cas_nav + Dt
-
         if cas != cas_obs:
             continue
         zoznam_druzic = data_obs[0][4]
@@ -277,7 +276,7 @@ while len(telo) > 0:
         Yd1 = data_all[j][4]
         Zd1 = data_all[j][5]
         ##print cd_nav, cas_nav
-        elev_uhol_rad= data_all[j][-1]
+        elev_uhol_rad = data_all[j][-1]
         elev_uhol_stupne = math.degrees(elev_uhol_rad)
         sin_elev_uhol = math.sin(elev_uhol_rad)
         # print sin_elev_uhol
@@ -285,6 +284,19 @@ while len(telo) > 0:
         Bd = BLH[0]
         Ld = BLH[1]
         Hd = BLH[2]
+        Bd_rad = math.radians(Bd)
+        Ld_rad = math.radians(Ld)
+        sur_ort.append(Ld_rad)
+        sur_ort.append(Bd_rad)
+        ortodroma.append(sur_ort)
+
+        if len(ortodroma) == 2:
+            print ortodroma[0][1], ortodroma[1][1], ortodroma[0][0], ortodroma[1][0]
+            sigma = math.sin(ortodroma[0][1])*math.sin(ortodroma[1][1]) + math.cos(ortodroma[0][1]*math.cos(ortodroma[1][1]*math.cos(ortodroma[1][0]-ortodroma[0][0])))
+            print sigma
+            d = sigma * r
+            azimut = math.degrees(math.asin((math.cos(ortodroma[1][1])/math.sin(sigma))*math.cos(ortodroma[1][0]-ortodroma[0][0])))
+            del(ortodroma[0])
         Hd_geoid = Hd - modul2.fhel_to_geoid(Bd, Ld)
         n = 0
         m = 3
@@ -299,7 +311,7 @@ while len(telo) > 0:
             observacia = data_obs[1][c]
             zaznam_obsS1 = observacia[index_obsS1:index_obsS1 + dlzka_zaznam].split()
             zaznam_obsS2 = observacia[index_obsS2:index_obsS2 + dlzka_zaznam].split()
-            #print zaznam_obs
+            # print zaznam_obs
             if len(zaznam_obsS1) > 0:
                 for cislo in zaznam_obsS1:
                     # print cislo
@@ -327,19 +339,21 @@ while len(telo) > 0:
             zapis = cd_obs.replace(".", ",") + "\t" + str(cas_obs).replace(".", ",") + "\t" + \
                     str(sin_elev_uhol).replace(".", ",") + "\t" + str(elev_uhol_stupne).replace(".", ",") + \
                     "\t" + str(snr1).replace(".", ",") + "\t" + str(snr_lin1).replace(".", ",") + \
-                    "\t" + str(snr2).replace(".", ",") + "\t" + str(snr_lin2).replace(".", ",") +\
-                    "\t" + str(Xd1).replace(".", ",")+ "\t" + str(Yd1).replace(".", ",") + "\t" + str(Zd1).replace(".", ",") + \
-                    "\t" + str(Bd).replace(".", ",") + "\t" + str(Ld).replace(".", ",") + "\t" + str(Hd).replace(".",",") + "\n"  # snr_lin1
-            zapis_kml_linia = '''            <Placemark id="feat_'''+ str(cd_obs)+'''_'''+ str(cas)+'''">
-                <Style id="style'''+str(cd_obs)+"_"+ str(cas)+'''">
+                    "\t" + str(snr2).replace(".", ",") + "\t" + str(snr_lin2).replace(".", ",") + \
+                    "\t" + str(Xd1).replace(".", ",") + "\t" + str(Yd1).replace(".", ",") + "\t" + str(Zd1).replace(".",",") + \
+                    "\t" + str(Bd).replace(".", ",") + "\t" + str(Ld).replace(".", ",") + "\t" + str(Hd).replace(".",",") + \
+                    "\t" + str(azimut).replace(".",",") + "\t" + str(d).replace(".",",") + "\n"  # snr_lin1
+            zapis_kml_linia = '''            <Placemark id="feat_''' + str(cd_obs) + '''_''' + str(cas) + '''">
+                <Style id="style''' + str(cd_obs) + "_" + str(cas) + '''">
                     <LineStyle>
                         <color>ff4672eb</color>
                     </LineStyle>
                 </Style>
-                <name>'''+nazov +''' - '''+'''druzica '''+str(cd_obs)+" ; cas: "+str(cas)+'''</name>
-            <styleUrl>#style'''+str(cd_obs)+"_"+ str(cas)+'''</styleUrl>
-                <LineString id="geom_'''+str(cd_obs)+"_"+ str(cas)+'''">
-                    <coordinates>'''+str(L)+","+str(B)+","+str(H_geoid)+" "+str(Ld)+","+str(Bd)+","+str(Hd_geoid)+'''</coordinates>
+                <name>''' + nazov + ''' - ''' + '''druzica ''' + str(cd_obs) + " ; cas: " + str(cas) + '''</name>
+            <styleUrl>#style''' + str(cd_obs) + "_" + str(cas) + '''</styleUrl>
+                <LineString id="geom_''' + str(cd_obs) + "_" + str(cas) + '''">
+                    <coordinates>''' + str(L) + "," + str(B) + "," + str(H_geoid) + " " + str(Ld) + "," + str(
+                Bd) + "," + str(Hd_geoid) + '''</coordinates>
                     <altitudeMode>absolute</altitudeMode>
                 </LineString>
             </Placemark>\n'''
@@ -348,10 +362,10 @@ while len(telo) > 0:
 
             break
 xls_obs.close()
-zapis_kml_bod = '''            <Placemark id="feat_'''+nazov+'''">
-                <name>'''+nazov+'''</name>
+zapis_kml_bod = '''            <Placemark id="feat_''' + nazov + '''">
+                <name>''' + nazov + '''</name>
                 <Point id="geom_1">
-                    <coordinates>'''+str(L)+","+str(B)+","+str(H_geoid)+'''</coordinates>
+                    <coordinates>''' + str(L) + "," + str(B) + "," + str(H_geoid) + '''</coordinates>
                     <altitudeMode>clampToGround</altitudeMode>
                 </Point>
             </Placemark>\n'''
@@ -360,23 +374,23 @@ zapis_kml_konec = '''    </Document>
 kml.write(zapis_kml_bod)
 kml.write(zapis_kml_konec)
 kml.close()
-#maxElevUhol = max(axisXsinElevUhol)
-#minElevUhol = min(axisXsinElevUhol)
-#maxCas = max(axisXcas)
-#minCas = min(axisXcas)
-#maxSNR1 = max(axisYSNR1)
-#maxSNR2 = max(axisYSNR2)
-#plt.figure(1)
-#plt.plot(axisXelevUhol, axisYSNR1)
-#plt.xlabel('stupne')
-#plt.ylabel('SNR 1')
-#plt.axis([minElevUhol, maxElevUhol, 0, maxSNR1 + 5])
-#plt.grid(True)
-#plt.savefig('SNR1')
-#plt.figure(2)
-#plt.plot(axisXelevUhol, axisYSNR2)
-#plt.xlabel('stupne')
-#plt.ylabel('SNR 2')
-#plt.axis([minElevUhol, maxElevUhol, 0, maxSNR2 + 5])
-#plt.grid(True)
-#plt.savefig('SNR2')
+# maxElevUhol = max(axisXsinElevUhol)
+# minElevUhol = min(axisXsinElevUhol)
+# maxCas = max(axisXcas)
+# minCas = min(axisXcas)
+# maxSNR1 = max(axisYSNR1)
+# maxSNR2 = max(axisYSNR2)
+# plt.figure(1)
+# plt.plot(axisXelevUhol, axisYSNR1)
+# plt.xlabel('stupne')
+# plt.ylabel('SNR 1')
+# plt.axis([minElevUhol, maxElevUhol, 0, maxSNR1 + 5])
+# plt.grid(True)
+# plt.savefig('SNR1')
+# plt.figure(2)
+# plt.plot(axisXelevUhol, axisYSNR2)
+# plt.xlabel('stupne')
+# plt.ylabel('SNR 2')
+# plt.axis([minElevUhol, maxElevUhol, 0, maxSNR2 + 5])
+# plt.grid(True)
+# plt.savefig('SNR2')

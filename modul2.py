@@ -215,12 +215,11 @@ def fData_EPH(telo_eph, cd_nav, cas_sekundy_nav):
 ##                print cas_sekundy_eph
                 return data_eph1, cas_sekundy_eph, rok_eph, mes_eph, den_eph
 
-def fEph_zapis(telo_eph, nazovNav, koncovka_txt):
-    nazov_eph_txt = nazovNav + "_eph"
-    cesta_vystup_eph_txt = "../data/vystup/" + nazov_eph_txt + koncovka_txt
-    data_vystup_eph_txt = os.path.join(cesta_vystup_eph_txt)  # vystup txt
-    txt_eph = open(data_vystup_eph_txt, "w")
-    txt_eph.write("Cislo_druzice cas_eph X_vyp Y_vyp Z_vyp\n")
+def fEph_zapis(telo_eph, nazov, nazov_eph, koncovka_txt):
+    # txt - vystup pre efemeridy
+    cesta_vystup_eph_txt = "../data/vystup/" + nazov + nazov_eph + koncovka_txt
+    txt_eph = open(cesta_vystup_eph_txt, "w")
+    txt_eph.write("Cislo_druzice cas_eph X_ Y_ Z_\n")
     for data_eph in telo_eph:
         if "EOF" in data_eph:
             return "konec zaznamu"

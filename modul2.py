@@ -5,6 +5,15 @@ import math
 import os
 import sys
 #-------------------------------------------------------------------------------
+#definuje nazov podla vstupnych suborov
+def fnazov(cesta):
+    pocetZnakov = 0
+    for znak in cesta:
+        if "/" in znak:
+            pocetZnakov = pocetZnakov+ 1
+    nazov = cesta.split("/")[pocetZnakov].split(".")[0]
+    return nazov
+#-------------------------------------------------------------------------------
 #prevod XYZ do geografickych souradnic, pokud se vezmou souradnice z TRO, presnost
 #zpetne trasnformace do XYZ je dle testovani do 1 mm ve vsech slozkach souradnic
 #postup prevzat z Hoffman-Wellenhof, provadi se dve iterace
@@ -282,3 +291,79 @@ def fObservacie(telo, pocet_kan):
             i = 0
     del telo[:podiel + poc_riadkov_obs * pocet_druzic]  # umazem spracovanu cas dat
     return zaznam_cas_obs, observacie
+
+# vyhldanie v ascii suboroch vysku elipsoidu nad geoidom
+def fhel_to_geoid(B, L):
+
+    B = float(B)
+    L = float(L)
+
+    n = -90
+    s = -45
+    for i in range(1,5):
+        if int(B) in range(n,s):
+##           print n
+           break
+        n = n+45
+        s = s+45
+
+    w = -180
+    e = -135
+    for i in range(1,9):
+        if int(L) in range(w,e):
+##              print w
+              break
+        w = w+45
+        e = e+45
+
+    if n >= 0 and w >= 0:
+        nazov ="n"+str(abs(n))+"e"+str(abs(w))
+        nazov = nazov.replace("n0","n00")
+        nazov = nazov.replace("e0","e00")
+    elif n >= 0 and w < 0:
+        nazov ="n"+str(abs(n))+"w"+str(abs(w))
+        nazov = nazov.replace("n0","n00")
+    elif n < 0 and w < 0:
+        nazov ="s"+str(abs(n))+"w"+str(abs(w))
+    elif n < 0 and w >= 0:
+        nazov ="s"+str(abs(n))+"e"+str(abs(w))
+        nazov = nazov.replace("e0","e00")
+##    print nazov
+
+    cesta_raster = os.path.join("../data/vstup/geoid_2008/ascii/"+nazov+".asc")
+    if not os.path.exists(cesta_raster):
+        print " ascii subor pre geoid neexistuje, navratova hodnota = 0"
+        vyska = 0
+        return vyska
+##        sys.exit()
+
+    vstup_raster = open(cesta_raster, "r")
+    subor_raster = vstup_raster.readlines()
+    vstup_raster.close()
+
+    hlavicka = subor_raster[0:6]
+    raster = subor_raster[6:]
+    ##print hlavicka
+    #print len(raster)
+
+    stlpec = int(hlavicka[0].split()[1])
+    riadok = int(hlavicka[1].split()[1])
+    x_zaciatok = int(hlavicka[2].split()[1])
+    y_zaciatok = int(hlavicka[3].split()[1])
+    velkost_b = float(hlavicka[4].split()[1].replace(",","."))
+    ##print stlpec, riadok, x_zaciatok, y_zaciatok, velkost_b
+
+    vypocet_stlpca = (int(round((L-x_zaciatok)/velkost_b,0)))-1
+    vypocet_riadka = (riadok-abs(int(round((B-y_zaciatok)/velkost_b,0))))-1
+#    print vypocet_riadka, vypocet_stlpca
+    for riadok_r in range(len(raster)):
+        if riadok_r == vypocet_riadka:
+            hodnota = raster[vypocet_riadka].split()[vypocet_stlpca]
+            #print hodnota
+            break
+        #if riadok == vypocet_riadka:
+            #hodnota = raster[vypocet_riadka-1].split()[vypocet_stlpca]
+            #break
+    vyska = float(hodnota.replace(",","."))
+    del(subor_raster, hlavicka, raster)
+    return vyska

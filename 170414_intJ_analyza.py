@@ -4,6 +4,7 @@ import modul2
 import math
 import numpy as np
 import matplotlib.pyplot as plt
+pi = math.pi
 
 #  vstupy
 ## epresne efemeridy
@@ -107,6 +108,7 @@ typ_observ.remove(typ_observ[0])
 # print "prva observacia:", first_observ
 # print "interval observacii", interval
 # print "vysky anteny", ant_HEN
+pilier = 2.3               # vyska piliera
 X = float(appPos_XYZ[0])
 Y = float(appPos_XYZ[1])
 Z = float(appPos_XYZ[2])
@@ -256,10 +258,10 @@ axisXsinElevUhol = []
 axisXcas = []
 axisYSNR1 = []
 axisYSNR2 = []
-ortodroma = []
-azimut = 0
-d = 0
+
 r = 6378.135    # polomer zeme v km
+lambda1 = 19.0  # vlnova dlzka L1 v cm
+lambda2 = 24.4  # vlnova dlzka L2 v cm
 while len(telo) > 0:
     data_obs = modul2.fObservacie(telo, pocet_kan)
     for j in range(len(data_all)):
@@ -284,27 +286,20 @@ while len(telo) > 0:
         Bd = BLH[0]
         Ld = BLH[1]
         Hd = BLH[2]
-
-        sur_ort.append(Ld)
-        sur_ort.append(Bd)
-        ortodroma.append(sur_ort)
-
-        if len(ortodroma) == 2:
-            Bd_rad1 = math.radians(ortodroma[0][1])  # Latitude      Zemepisna sirka fi
-            Ld_rad1 = math.radians(ortodroma[0][0])  # Longitude     Zemepisna dlzka lambda
-            Bd_rad2 = math.radians(ortodroma[1][1])
-            Ld_rad2 = math.radians(ortodroma[1][0])
-            #print Bd_rad1, Ld_rad1, Bd_rad2, Ld_rad2
-            sigma = math.acos(math.sin(Bd_rad1)*math.sin(Bd_rad2) + math.cos(Bd_rad1)*math.cos(Bd_rad2)*math.cos(Ld_rad2-Ld_rad1))
-            #print sigma
-            d = sigma * r
-            sina = (math.cos(Bd_rad2)/math.sin(sigma))*math.sin(Ld_rad2-Ld_rad1)
-            #print sina
-            azimut = math.degrees(math.asin(sina))
-            #print azimut
-            del(ortodroma[0])
-            #print ortodroma
         Hd_geoid = Hd - modul2.fhel_to_geoid(Bd, Ld)
+
+        Bd_rad = math.radians(Bd)  # Latitude      Zemepisna sirka fi
+        Ld_rad = math.radians(Ld)  # Longitude     Zemepisna dlzka lambda
+        B_rad = math.radians(B)
+        L_rad = math.radians(L)
+        sigma = math.acos(math.sin(B_rad)*math.sin(Bd_rad) + math.cos(B_rad)*math.cos(Bd_rad)*math.cos(L_rad-Ld_rad))
+        #print sigma
+        d = sigma * r
+        sina = (math.cos(B_rad)/math.sin(sigma))*math.sin(L_rad-Ld_rad)
+        #print sina
+        azimut = math.degrees(math.asin(sina))            #print azimut
+        #print ortodroma
+
         n = 0
         m = 3
 
@@ -343,13 +338,16 @@ while len(telo) > 0:
             axisYSNR1.append(snr1)
             axisYSNR2.append(snr2)
             snr_lin2 = math.pow(10, (snr2 / 20))
+            h = pilier + float(ant_HEN[0])
+            psi1 = ((2*pi)/lambda1)*2*h*math.sin(elev_uhol_rad)
             zapis = cd_obs.replace(".", ",") + "\t" + str(cas_obs).replace(".", ",") + "\t" + \
                     str(sin_elev_uhol).replace(".", ",") + "\t" + str(elev_uhol_stupne).replace(".", ",") + \
                     "\t" + str(snr1).replace(".", ",") + "\t" + str(snr_lin1).replace(".", ",") + \
                     "\t" + str(snr2).replace(".", ",") + "\t" + str(snr_lin2).replace(".", ",") + \
                     "\t" + str(Xd1).replace(".", ",") + "\t" + str(Yd1).replace(".", ",") + "\t" + str(Zd1).replace(".",",") + \
                     "\t" + str(Bd).replace(".", ",") + "\t" + str(Ld).replace(".", ",") + "\t" + str(Hd).replace(".",",") + \
-                    "\t" + str(azimut).replace(".",",") + "\t" + str(d).replace(".",",") + "\n"  # snr_lin1
+                    "\t" + str(azimut).replace(".",",") + "\t" + str(d).replace(".",",") + "\t" + str(elev_uhol_stupne).replace(".",",") + \
+                    "\t" + str(psi1).replace(".",",") + "\n"
             zapis_kml_linia = '''            <Placemark id="feat_''' + str(cd_obs) + '''_''' + str(cas) + '''">
                 <Style id="style''' + str(cd_obs) + "_" + str(cas) + '''">
                     <LineStyle>

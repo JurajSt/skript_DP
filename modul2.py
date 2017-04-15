@@ -1,9 +1,8 @@
 import math
-import os, sys
-
-import math
 import os
 import sys
+import ogr
+import osgeo.osr as osr
 #-------------------------------------------------------------------------------
 #definuje nazov podla vstupnych suborov
 def fnazov(cesta):
@@ -366,3 +365,40 @@ def fhel_to_geoid(B, L):
     vyska = float(hodnota.replace(",","."))
     del(subor_raster, hlavicka, raster)
     return vyska
+
+def fCalculateAzimuth(xf,yf, xl, yl):
+    dX = xl - xf
+    dY = yl - yf
+    PI = math.pi
+    Azimuth = 0  # Default case, dX = 0 and dY >= 0
+    if dX > 0:
+        Azimuth = 90 - math.atan(dY / dX) * 180 / PI
+    elif dX < 0:
+        Azimuth = 270 - math.atan(dY / dX) * 180 / PI
+    elif dY < 0:
+        Azimuth = 180
+
+    return Azimuth
+
+
+def fLineShp(X, Y, Xd, Yd):
+
+    line = ogr.Geometry(ogr.wkbLineString)
+    line.AddPoint(X, Y)
+    line.AddPoint(Xd, Yd)
+
+    driver = ogr.GetDriverByName('ESRI Shapefile')
+    ds = driver.CreateDataSource('../data/vystup')
+
+    srs = osr.SpatialReference()
+    srs.ImportFromEPSG(4326)
+
+    layer = ds.CreateLayer('test', srs, ogr.wkbLineString)
+    fieldDefn_ = ogr.FieldDefn('id', ogr.OFTInteger)
+    layer.CreateField(fieldDefn_)
+    featureDefn = layer.GetLayerDefn()
+    feature = ogr.Feature(featureDefn)
+    feature.SetGeometry(line)
+    feature.SetField('id', 1)
+    layer.CreateFeature(feature)
+    return 0

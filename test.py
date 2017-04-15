@@ -1,27 +1,24 @@
+import modul2
+import math
 
-a = 45000.0/60/60
+X = 3929181.8508
+Y = 1455236.5099
+Xd = 25875123.7835
+Yd = -1148521.8129
 
+xf = 3929181.8508
+yf = 1455236.5099
+xl = 25875123.7835
+yl = -1148521.8129
+dX = xl - xf
+dY = yl - yf
+PI = math.pi
+Azimuth = 0  # Default case, dX = 0 and dY >= 0
+if dX > 0:
+    Azimuth = 90 - math.atan(dY / dX) * 180 / PI
+elif dX < 0:
+    Azimuth = 270 - math.atan(dY / dX) * 180 / PI
+elif dY < 0:
+    Azimuth = 180
 
-
-
-import matplotlib.pyplot as plt
-plt.plot([2,2,3,4], [1,2,3,4], 'ro')
-plt.ylabel('some numbers')
-plt.show()
-
-import numpy as np
-import matplotlib.pyplot as plt
-
-def f(t):
-    return np.exp(-t) * np.cos(2*np.pi*t)
-
-t1 = np.arange(0.0, 5.0, 0.1)
-t2 = np.arange(0.0, 5.0, 0.02)
-
-plt.figure(2)
-plt.subplot(210)
-plt.plot(t1, f(t1), t2, f(t2), 'k')
-
-plt.subplot(212)
-plt.plot(t2, np.cos(2*np.pi*t2), 'r--')
-plt.savefig('graf.pdf')
+print Azimuth

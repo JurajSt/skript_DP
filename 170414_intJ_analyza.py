@@ -3,7 +3,6 @@ import os
 import modul2
 import math
 import numpy as np
-import matplotlib.pyplot as plt
 pi = math.pi
 
 #  vstupy
@@ -299,7 +298,8 @@ while len(telo) > 0:
         #print sina
         azimut = math.degrees(math.asin(sina))            #print azimut
         #print ortodroma
-
+        Azimut2 = modul2.fCalculateAzimuth(X, Y, Xd1, Yd1)
+        #Line = modul2.fLineShp(X, Y, Xd1, Yd1)
         n = 0
         m = 3
 
@@ -346,7 +346,7 @@ while len(telo) > 0:
                     "\t" + str(snr2).replace(".", ",") + "\t" + str(snr_lin2).replace(".", ",") + \
                     "\t" + str(Xd1).replace(".", ",") + "\t" + str(Yd1).replace(".", ",") + "\t" + str(Zd1).replace(".",",") + \
                     "\t" + str(Bd).replace(".", ",") + "\t" + str(Ld).replace(".", ",") + "\t" + str(Hd).replace(".",",") + \
-                    "\t" + str(azimut).replace(".",",") + "\t" + str(d).replace(".",",") + "\t" + str(elev_uhol_stupne).replace(".",",") + \
+                    "\t" + str(azimut).replace(".",",") + "\t" + str(d).replace(".",",") + "\t" + str(Azimut2).replace(".",",") + \
                     "\t" + str(psi1).replace(".",",") + "\n"
             zapis_kml_linia = '''            <Placemark id="feat_''' + str(cd_obs) + '''_''' + str(cas) + '''">
                 <Style id="style''' + str(cd_obs) + "_" + str(cas) + '''">

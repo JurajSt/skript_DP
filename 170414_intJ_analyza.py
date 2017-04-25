@@ -80,6 +80,7 @@ for data in subor_obs:
     TObs = "# / TYPES OF OBSERV"
     TfObs = "TIME OF FIRST OBS"
 
+
     ##print hlavicka
     for data in hlavicka_obs:
         if "APPROX POSITION XYZ" in data:
@@ -94,6 +95,15 @@ for data in subor_obs:
             ts1 = ts1 + ts
         if "TIME" in data:
             firstObs = data[0:(len(data) - (len(TfObs) + 1))]
+        if "latitude" in data:
+            Latitude = data.split()
+            Lat = Latitude[0]
+        if "longitude" in data:
+            Longitude = data.split()
+            Lon = Longitude[0]
+        if "elevation" in data:
+            Elevation = data.split()
+            Elev = Elevation[0]
 
 first_observ = firstObs.split()
 appPos_XYZ = appPosXYZ.split()
@@ -108,14 +118,14 @@ typ_observ.remove(typ_observ[0])
 # print "interval observacii", interval
 # print "vysky anteny", ant_HEN
 pilier = 2.3               # vyska piliera
-X = float(appPos_XYZ[0])
-Y = float(appPos_XYZ[1])
-Z = float(appPos_XYZ[2])
-BLH_stanica = modul2.fXYZ_to_LatLonH(X, Y, Z)
-B = BLH_stanica[0]
-L = BLH_stanica[1]
-H = BLH_stanica[2]
-H_geoid = H - modul2.fhel_to_geoid(B, L)
+B = float(Lat)
+L = float(Lon)
+H = float(Elev)
+XYZ = modul2.fXYZ_to_LatLonH(B, L, H)
+X = XYZ[0]
+Y = XYZ[1]
+Z = XYZ[2]
+#H_geoid = H - modul2.fhel_to_geoid(B, L)
 dr = "PG23"
 ## ##########################################################
 ## nacitanie udajov z navigacnej spravy
@@ -257,7 +267,13 @@ axisXsinElevUhol = []
 axisXcas = []
 axisYSNR1 = []
 axisYSNR2 = []
-
+# ###########################################################
+zoznam_suradnic = []
+zoznam = []
+zoznam.append(nazov)
+zoznam.append(B)
+zoznam.append(L)
+zoznam_suradnic.append(zoznam)
 r = 6378.135    # polomer zeme v km
 lambda1 = 19.0  # vlnova dlzka L1 v cm
 lambda2 = 24.4  # vlnova dlzka L2 v cm
@@ -285,10 +301,9 @@ while len(telo) > 0:
         Bd = BLH[0]
         Ld = BLH[1]
         Hd = BLH[2]
-        Hd_geoid = Hd - modul2.fhel_to_geoid(Bd, Ld)
-
-        Bd_rad = math.radians(Bd)  # Latitude      Zemepisna sirka fi
-        Ld_rad = math.radians(Ld)  # Longitude     Zemepisna dlzka lambda
+        #Hd_geoid = Hd - modul2.fhel_to_geoid(Bd, Ld)
+        Bd_rad = math.radians(Bd)  # Latitude      Zemepisna sirka fi   y
+        Ld_rad = math.radians(Ld)  # Longitude     Zemepisna dlzka lambda  x
         B_rad = math.radians(B)
         L_rad = math.radians(L)
         sigma = math.acos(math.sin(B_rad)*math.sin(Bd_rad) + math.cos(B_rad)*math.cos(Bd_rad)*math.cos(L_rad-Ld_rad))
@@ -299,10 +314,8 @@ while len(telo) > 0:
         azimut = math.degrees(math.asin(sina))            #print azimut
         #print ortodroma
         Azimut2 = modul2.fCalculateAzimuth(X, Y, Xd1, Yd1)
-        #Line = modul2.fLineShp(X, Y, Xd1, Yd1)
         n = 0
         m = 3
-
         for c in range(len(zoznam_druzic) / 3):
             cd_obs = zoznam_druzic[n:m]
             n = n + 3
@@ -357,20 +370,25 @@ while len(telo) > 0:
                 <name>''' + nazov + ''' - ''' + '''druzica ''' + str(cd_obs) + " ; cas: " + str(cas) + '''</name>
             <styleUrl>#style''' + str(cd_obs) + "_" + str(cas) + '''</styleUrl>
                 <LineString id="geom_''' + str(cd_obs) + "_" + str(cas) + '''">
-                    <coordinates>''' + str(L) + "," + str(B) + "," + str(H_geoid) + " " + str(Ld) + "," + str(
-                Bd) + "," + str(Hd_geoid) + '''</coordinates>
+                    <coordinates>''' + str(L) + "," + str(B) + "," + str(H) + " " + str(Ld) + "," + str(
+                Bd) + "," + str(Hd) + '''</coordinates>
                     <altitudeMode>absolute</altitudeMode>
                 </LineString>
             </Placemark>\n'''
             xls_obs.write(zapis)
             kml.write(zapis_kml_linia)
-
+            skratenie = modul2.fSkratenie(X, Y, Xd1, Yd1)
+            zoznam = []
+            zoznam.append(cas)
+            zoznam.append(Bd)
+            zoznam.append(Ld)
+            zoznam_suradnic.append(zoznam)
             break
 xls_obs.close()
 zapis_kml_bod = '''            <Placemark id="feat_''' + nazov + '''">
                 <name>''' + nazov + '''</name>
                 <Point id="geom_1">
-                    <coordinates>''' + str(L) + "," + str(B) + "," + str(H_geoid) + '''</coordinates>
+                    <coordinates>''' + str(L) + "," + str(B) + "," + str(H) + '''</coordinates>
                     <altitudeMode>clampToGround</altitudeMode>
                 </Point>
             </Placemark>\n'''
@@ -379,7 +397,7 @@ zapis_kml_konec = '''    </Document>
 kml.write(zapis_kml_bod)
 kml.write(zapis_kml_konec)
 kml.close()
-# maxElevUhol = max(axisXsinElevUhol)
+# maxElevUhol = max(axisXsinElevUhol)  # hodnoty na tvorbu grafu
 # minElevUhol = min(axisXsinElevUhol)
 # maxCas = max(axisXcas)
 # minCas = min(axisXcas)
@@ -399,3 +417,5 @@ kml.close()
 # plt.axis([minElevUhol, maxElevUhol, 0, maxSNR2 + 5])
 # plt.grid(True)
 # plt.savefig('SNR2')
+
+line = modul2.fLineShp(zoznam_suradnic, nazov)    # vytvorenie shp vrstvy

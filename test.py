@@ -1,24 +1,17 @@
+import ogr, os, math
 import modul2
-import math
+import definicie
 
-X = 3929181.8508
-Y = 1455236.5099
-Xd = 25875123.7835
-Yd = -1148521.8129
+lat = 49.03471077
+lon = 20.32293131
+elev = 746.018
 
-xf = 3929181.8508
-yf = 1455236.5099
-xl = 25875123.7835
-yl = -1148521.8129
-dX = xl - xf
-dY = yl - yf
-PI = math.pi
-Azimuth = 0  # Default case, dX = 0 and dY >= 0
-if dX > 0:
-    Azimuth = 90 - math.atan(dY / dX) * 180 / PI
-elif dX < 0:
-    Azimuth = 270 - math.atan(dY / dX) * 180 / PI
-elif dY < 0:
-    Azimuth = 180
+lat_s = 49.03551077
+lon_s = 20.32293131
 
-print Azimuth
+hodnota = 4.44*math.pow(10,-4)
+hodnota2 = math.pow(4.44*math.pow(10,-4),2)
+
+la = lat_s - hodnota
+lo = lon_s - hodnota2
+print la, lo

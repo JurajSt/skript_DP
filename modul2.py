@@ -381,24 +381,54 @@ def fCalculateAzimuth(xf,yf, xl, yl):
     return Azimuth
 
 
-def fLineShp(X, Y, Xd, Yd):
+def fLineShp(zoznam_suradnic, nazov):
+    # Input data
+    fieldName = 'cas'
+    fieldType = ogr.OFTInteger
+    outSHPfn = 'shp'
+    # coordinate system
+    #srs = osr.SpatialReference()   # hlada tabulku epsg kodov????
+    #srs.ImportFromEPSG(4326)
 
-    line = ogr.Geometry(ogr.wkbLineString)
-    line.AddPoint(X, Y)
-    line.AddPoint(Xd, Yd)
-
-    driver = ogr.GetDriverByName('ESRI Shapefile')
-    ds = driver.CreateDataSource('../data/vystup')
-
-    srs = osr.SpatialReference()
-    srs.ImportFromEPSG(4326)
-
-    layer = ds.CreateLayer('test', srs, ogr.wkbLineString)
-    fieldDefn_ = ogr.FieldDefn('id', ogr.OFTInteger)
-    layer.CreateField(fieldDefn_)
-    featureDefn = layer.GetLayerDefn()
-    feature = ogr.Feature(featureDefn)
-    feature.SetGeometry(line)
-    feature.SetField('id', 1)
-    layer.CreateFeature(feature)
+    # Create the output shapefile
+    shpDriver = ogr.GetDriverByName("ESRI Shapefile")
+    if os.path.exists(outSHPfn):
+        shpDriver.DeleteDataSource(outSHPfn)
+    outDataSource = shpDriver.CreateDataSource(outSHPfn)
+    outLayer = outDataSource.CreateLayer(nazov, geom_type=ogr.wkbLineString)
+    X = zoznam_suradnic[0][2]
+    Y = zoznam_suradnic[0][1]
+    i = 1
+    # create a field
+    idField = ogr.FieldDefn(fieldName, fieldType)
+    outLayer.CreateField(idField)
+    # Create the feature and set values
+    featureDefn = outLayer.GetLayerDefn()
+    outFeature = ogr.Feature(featureDefn)
+    while i < len(zoznam_suradnic):
+        Xd = zoznam_suradnic[i][2]
+        Yd = zoznam_suradnic[i][1]
+        fieldValue = zoznam_suradnic[i][0]
+        # create point geometry
+        line = ogr.Geometry(ogr.wkbLineString)
+        line.AddPoint(X, Y)
+        line.AddPoint(Xd, Yd)
+        i = i+1
+        outFeature.SetGeometry(line)
+        outFeature.SetField(fieldName, fieldValue)
+        outLayer.CreateFeature(outFeature)
+    outFeature = None
     return 0
+
+def fSkratenie(x, y, xd, yd):
+    dd = 20
+    dx = x - xd
+    dy = y - yd
+    d = math.sqrt((dx * dx) + (dy * dy))
+    a = dy / d
+    b = dx / d
+    dyy = a * dd
+    dxx = b * dd
+    xxd = x + dxx
+    yyd = y + dyy
+    return xxd, yyd

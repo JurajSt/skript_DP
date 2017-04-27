@@ -1,6 +1,6 @@
 import sys
 import os
-import modul2
+import modul2, test
 import math
 import numpy as np
 pi = math.pi
@@ -51,6 +51,8 @@ xls_obs = open(cesta_vystup_xls_obs, "w")
 cesta_vystup_kml = "../data/vystup/" + nazov + koncovka_kml
 kml = open(cesta_vystup_kml, "w")
 # zapis haviciek
+cesta_vystup_txt_orez = "../data/vystup/orez_" + nazov + koncovka_txt
+txt_orez = open(cesta_vystup_txt_orez, "w")
 xls_obs.write("CD\tcas\tsin_elevUhol\tstupne\tSRN1\tSRN_lin1\tSRN2\tSRN_lin2\tXd\tYd\tZd\tBd\tLd\tHd\tazimut\td\n")
 xls_porovnanie.write(
     "CD_eph\tCD_nav\tcas_eph\tcas_nav\tDt\tXeph\tYeph\tZeph\tXvyp\tYvyp\tZvyp\tXroz\tYroz\tZroz\tVektor\n")
@@ -58,6 +60,7 @@ txt_poloha_d.write("Cislo_druzice cas_eph cas_nav Dt X_vyp Y_vyp Z_vyp\n")
 kml.write('''<?xml version="1.0" encoding="UTF-8"?>
 <kml xmlns="http://earth.google.com/kml/2.0">
 <Document>\n''')
+txt_orez.write("ID X Y\n")
 # ###########################################################
 # nacitanie udajov z eph
 i = 0
@@ -121,7 +124,7 @@ pilier = 2.3               # vyska piliera
 B = float(Lat)
 L = float(Lon)
 H = float(Elev)
-XYZ = modul2.fXYZ_to_LatLonH(B, L, H)
+XYZ = modul2.fLatLonH_to_XYZ(B, L, H)
 X = XYZ[0]
 Y = XYZ[1]
 Z = XYZ[2]
@@ -269,10 +272,7 @@ axisYSNR1 = []
 axisYSNR2 = []
 # ###########################################################
 zoznam_suradnic = []
-zoznam = []
-zoznam.append(nazov)
-zoznam.append(B)
-zoznam.append(L)
+zoznam = [X, Y, nazov]
 zoznam_suradnic.append(zoznam)
 r = 6378.135    # polomer zeme v km
 lambda1 = 19.0  # vlnova dlzka L1 v cm
@@ -377,11 +377,8 @@ while len(telo) > 0:
             </Placemark>\n'''
             xls_obs.write(zapis)
             kml.write(zapis_kml_linia)
-            skratenie = modul2.fSkratenie(X, Y, Xd1, Yd1)
-            zoznam = []
-            zoznam.append(cas)
-            zoznam.append(Bd)
-            zoznam.append(Ld)
+            #skratenie = modul2.fSkratenie(X, Y, Xd1, Yd1)
+            zoznam = [Xd1, Yd1, cas]
             zoznam_suradnic.append(zoznam)
             break
 xls_obs.close()
@@ -418,4 +415,43 @@ kml.close()
 # plt.grid(True)
 # plt.savefig('SNR2')
 
-line = modul2.fLineShp(zoznam_suradnic, nazov)    # vytvorenie shp vrstvy
+line = modul2.fLineShp(zoznam_suradnic, nazov, "shp")    # vytvorenie shp vrstvy
+kruh = test.fKruh(X,Y,Z)
+priesecnikDB = []
+for e in range(len(kruh)):
+    for i in range(len(kruh[0])-1):
+        a = kruh[e][i]
+        b = kruh[e][i+1]
+        Ax = kruh[e][i][1]
+        Ay = kruh[e][i][2]
+        Bx = kruh[e][i+1][1]
+        By = kruh[e][i+1][2]
+        A = [Ax, Ay]
+        B = [Bx, By]
+        for j in range(len(zoznam_suradnic)-1):
+            Cx = zoznam_suradnic[0][0]
+            Cy = zoznam_suradnic[0][1]
+            Dx = zoznam_suradnic[j+1][0]
+            Dy = zoznam_suradnic[j+1][1]
+            C = [Cx, Cy]
+            D = [Dx, Dy]
+            if str(10104046.2952) == str(round(Dx,4)):
+                if str(1455292.77266) == str(Ay):
+                    a=1
+            priesecnik = modul2.fIntersect(A, B, C, D)
+            if priesecnik ==0:
+                continue
+            priesecnikDB.append(priesecnik)
+            #print priesecnikDB
+            zapis_orez = str(0) + " " + str(priesecnik[0]).replace(".", ",") + " " + str(priesecnik[1]).replace(".", ",") + "\n"
+            txt_orez.write(zapis_orez)
+Bod = [X,Y]
+priesecnikDB.insert(0,Bod)
+line = modul2.fLineShp(priesecnikDB, nazov, "shp2")
+txt_orez.close()
+del(j)
+blh2 = []
+for j in range(len(priesecnikDB)):
+    blh = modul2.fXYZ_to_LatLonH(priesecnikDB[j][0], priesecnikDB[j][1], Z)
+    blh2.append(blh)
+    line = modul2.fLineShp(blh2, nazov, "blh")

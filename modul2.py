@@ -381,11 +381,11 @@ def fCalculateAzimuth(xf,yf, xl, yl):
     return Azimuth
 
 
-def fLineShp(zoznam_suradnic, nazov):
+def fLineShp(zoznam_suradnic, nazov, output):
     # Input data
     fieldName = 'cas'
     fieldType = ogr.OFTInteger
-    outSHPfn = 'shp'
+    outSHPfn = output
     # coordinate system
     #srs = osr.SpatialReference()   # hlada tabulku epsg kodov????
     #srs.ImportFromEPSG(4326)
@@ -396,7 +396,7 @@ def fLineShp(zoznam_suradnic, nazov):
         shpDriver.DeleteDataSource(outSHPfn)
     outDataSource = shpDriver.CreateDataSource(outSHPfn)
     outLayer = outDataSource.CreateLayer(nazov, geom_type=ogr.wkbLineString)
-    X = zoznam_suradnic[0][2]
+    X = zoznam_suradnic[0][0]
     Y = zoznam_suradnic[0][1]
     i = 1
     # create a field
@@ -406,9 +406,9 @@ def fLineShp(zoznam_suradnic, nazov):
     featureDefn = outLayer.GetLayerDefn()
     outFeature = ogr.Feature(featureDefn)
     while i < len(zoznam_suradnic):
-        Xd = zoznam_suradnic[i][2]
+        Xd = zoznam_suradnic[i][0]
         Yd = zoznam_suradnic[i][1]
-        fieldValue = zoznam_suradnic[i][0]
+        fieldValue = "ttt"
         # create point geometry
         line = ogr.Geometry(ogr.wkbLineString)
         line.AddPoint(X, Y)
@@ -432,3 +432,55 @@ def fSkratenie(x, y, xd, yd):
     xxd = x + dxx
     yyd = y + dyy
     return xxd, yyd
+
+def fIntersect(A,B,C,D):                # kontorla rovnobeznosti s osami x,y
+    S = [0,0]
+
+    if A[1]==B[1]:        # rovonbeznost z osou x a = 0 pre y a = 1 ale nedostnem dobry priesecnik, riesim dole
+        a1 = 0
+    elif A[0]==B[0]:
+        a1 = 1
+    else:
+        a1 = (B[1]-A[1])/(B[0]-A[0])
+
+    if C[1]==D[1]:
+        a2 = 0
+    elif C[0]==D[0]:
+        a2 = 1
+    else:
+        a2 = (D[1]-C[1])/(D[0]-C[0])
+
+    if a1 == a2:
+        print "prusecnik neexistuje"
+        sys.exit()
+
+    b1 = A[1]-a1*A[0]
+    b2 = C[1]-a2*C[0]
+
+    S[0] = (b1-b2)/(a2-a1)
+    S[1] = a2*S[0]+b2
+
+    if A[0]==B[0]:            # rovnobeznost z osou y
+        S[0] = A[0]
+        S[1] = a2*S[0]+b2
+
+    if C[0]==D[0]:
+        S[0] = C[0]
+        S[1] = a1*S[0]+b1
+
+    if (A[0]-S[0]) * (S[0]-B[0]) >= 0:
+        a = 1
+    # print "lezi mezi body AB"
+    else:
+        return 0
+        print "prusecnik nelezi mezi body AB"
+
+    if (C[0]- S[0]) * (S[0]-D[0]) >= 0:
+    #print "lezi mezi body CD"
+        a=1
+    else:
+        return 0
+        print "prusecnik nelezi mezi body CD"
+
+
+    return S

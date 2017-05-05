@@ -26,15 +26,21 @@ dy = y-ys
 def fKruh(x, y, z):
     r = 65.0
     i = 0
-    cesta_vystup_txt_kruh = "../data/vystup/kruznica.txt"
-    txt_poloha_d = open(cesta_vystup_txt_kruh, "w")
-    txt_poloha_d.write("ID B L H\n")
+    cesta_vystup_txt_kruh_xyz = "../data/vystup/kruznica_xyz.txt"
+    txt_kruh_xyz = open(cesta_vystup_txt_kruh_xyz, "w")
+    txt_kruh_xyz.write("ID X Y Z\n")
+    cesta_vystup_txt_kruh_blh = "../data/vystup/kruznica_blh.txt"
+    txt_kruh_blh = open(cesta_vystup_txt_kruh_blh, "w")
+    txt_kruh_blh.write("ID L B H\n")
     idLH = 1
     idLD = 1
     idPH = 1
     idPD = 1
-    zapis = str(0) + " " + str(x).replace(".", ",") + " " + str(y).replace(".", ",") + " " + str(z).replace(".", ",") + "\n"
-    txt_poloha_d.write(zapis)
+    blh = modul2.fXYZ_to_LatLonH(x,y,z)
+    zapis_xyz = str(0) + " " + str(x).replace(".", ",") + " " + str(y).replace(".", ",") + " " + str(z).replace(".", ",") + "\n"
+    zapis_blh = str(0) + " " + str(blh[1]).replace(".", ",") + " " + str(blh[0]).replace(".", ",") + " " + str(blh[2]).replace(".",",") + "\n"
+    txt_kruh_xyz.write(zapis_xyz)
+    txt_kruh_xyz.write(zapis_blh)
     LH = []
     LD = []
     PH = []
@@ -49,6 +55,10 @@ def fKruh(x, y, z):
         xkPD = x - i
         ykLD = y - yy
         xkLD = x + i
+        blhLH = modul2.fXYZ_to_LatLonH(xkLH, ykLH, z)
+        blhLD = modul2.fXYZ_to_LatLonH(xkLD, ykLD, z)
+        blhPH = modul2.fXYZ_to_LatLonH(xkPH, ykPH, z)
+        blhPD = modul2.fXYZ_to_LatLonH(xkPD, ykPD, z)
         zaznamLH = [idLH, xkLH, ykLH]
         zaznamLD = [idLD, xkLD, ykLD]
         zaznamPH = [idPH, xkPH, ykPH]
@@ -65,16 +75,28 @@ def fKruh(x, y, z):
                  + " " + str(z).replace(".", ",") + "\n"
         zapis4 = str(idLD) + " " + str(xkLD).replace(".", ",") + " " + str(ykLD).replace(".", ",") \
                  + " " + str(z).replace(".", ",") + "\n"
-        #zapis = str(id) + " " + str(blhk[0]).replace(".", ",") + " " + str(blhk[1]).replace(".", ",") + " " + str(blhk[2]).replace(".", ",") + "\n"
-        txt_poloha_d.write(zapis1)
-        txt_poloha_d.write(zapis2)
-        txt_poloha_d.write(zapis3)
-        txt_poloha_d.write(zapis4)
+        zapis5 = str(idLH) + " " + str(blhLH[1]).replace(".", ",") + " " + str(blhLH[0]).replace(".", ",") \
+                 + " " + str(blhLH[2]).replace(".", ",") + "\n"
+        zapis6 = str(idLD) + " " + str(blhLD[1]).replace(".", ",") + " " + str(blhLD[0]).replace(".", ",") \
+                 + " " + str(blhLD[2]).replace(".", ",") + "\n"
+        zapis7 = str(idPH) + " " + str(blhPH[1]).replace(".", ",") + " " + str(blhPH[0]).replace(".", ",") \
+                 + " " + str(blhPH[2]).replace(".", ",") + "\n"
+        zapis8 = str(idPD) + " " + str(blhPD[1]).replace(".", ",") + " " + str(blhPD[0]).replace(".", ",") \
+                 + " " + str(blhPD[2]).replace(".", ",") + "\n"
+        txt_kruh_xyz.write(zapis1)
+        txt_kruh_xyz.write(zapis2)
+        txt_kruh_xyz.write(zapis3)
+        txt_kruh_xyz.write(zapis4)
+        txt_kruh_blh.write(zapis5)
+        txt_kruh_blh.write(zapis6)
+        txt_kruh_blh.write(zapis7)
+        txt_kruh_blh.write(zapis8)
         idLH = idLH + 1
         idLD = idLD + 1
         idPH = idPH + 1
         idPD = idPD + 1
         i = i+0.01
-    txt_poloha_d.close()
+    txt_kruh_xyz.close()
+    txt_kruh_blh.close()
     return LH, LD, PH, PD
 

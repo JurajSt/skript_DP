@@ -1,12 +1,12 @@
 import sys
 import os
-import modul2, test
+import modul2, SHP, kruh, priesecnik
 import math
 import numpy as np
 pi = math.pi
 
-#  vstupy
-## epresne efemeridy
+# vstupy
+# presne efemeridy
 cesta_eph = os.path.join("../data/vstup/cod19212.eph")  # cof19196.eph
 if not os.path.exists(cesta_eph):
     print "subor eph neexistuje"
@@ -35,7 +35,6 @@ vstup_obs.close()
 zoznam_farieb = 'ff4672eb', 'ffda6e6f', 'ff9b26d7', 'ff941645', 'ffff220f', 'ffe09ea7', 'ff0a0a11', 'ff707236', 'ffc6cc23', 'ff2c8424', 'fff10b5a', 'ffcee25d', 'ff5538f2', 'fff708ae', 'ff5d18d2', 'fff50f2e', 'ffef66c1', 'ff464eec', 'ff354725', 'ffb1b329', 'ff643f30', 'ffe5b0fd', 'ffe512a6', 'ffaa0d2c', 'ffdd618a', 'ff57aa6a', 'ffa866da', 'ff430189', 'ff50757b', 'ff93568b', 'ff504621', 'ff6374b9', 'ff9e1e08', 'ffc52878', 'ff2a1c75', 'ff603267', 'ffa1ba0f', 'ff24a888', 'ffa0c757', 'ff413393', 'ffcadde6', 'ffb1bc4c', 'ffc5962e', 'ff9e9e60', 'ff3fcdc7', 'ff95bb90', 'ffbe26b5', 'ff81d106', 'ff1b8d9b', 'fffcde55', 'ffebbf0f', 'ff5caaa7', 'ff07bdd1', 'ffa36485', 'ff2ffc4d', 'ffec06e7', 'ff8eec68', 'ff46a9de', 'ff844149', 'fff323e2', 'ff433804', 'ff6caaec', 'ffc9392a', 'fff3543e', 'ff2d2755', 'ff42b097', 'ffe89bef', 'ff550801', 'ffddefdb', 'ff86d370', 'ff8170a3', 'ff2f84ea', 'ff04d250', 'ff433845', 'ffb22ca7', 'ffea79b4', 'ff865deb', 'ff8fba95', 'ff83ecdc', 'ff84726a', 'ff635c0b', 'ffb6cb0f', 'ff782274', 'ffe984b1', 'ff90a410', 'ffd72f38', 'ff17607b', 'ffebd493', 'ff028e9b', 'ff048cdd', 'ff1b5be7', 'ff144a1d', 'ff6f60d4', 'ff5079df', 'ff7987f7', 'ff31076d', 'ff7a9827', 'ffa83f21', 'ff3c63b4', 'ff9aca49', 'ff101008'
 koncovka_xls = ".xls"
 koncovka_txt = ".txt"
-koncovka_kml = ".kml"
 nazov = modul2.fnazov(cesta_nav)  # funkcia vracia nazov vstupneho suboru
 nazov_eph = modul2.fnazov(cesta_eph)
 # xls - porovnanie eph a vypocitane suradnice druzice
@@ -47,9 +46,7 @@ txt_poloha_d = open(cesta_vystup_txt_poloha_d, "w")
 # xls - vytup s observacnymi datami priradenych druzici + suradnice XYZ, BLH
 cesta_vystup_xls_obs = "../data/vystup/" + nazov + koncovka_xls
 xls_obs = open(cesta_vystup_xls_obs, "w")
-# kml - vystup pre kontrolu
-cesta_vystup_kml = "../data/vystup/" + nazov + koncovka_kml
-kml = open(cesta_vystup_kml, "w")
+
 # zapis haviciek
 cesta_vystup_txt_orez = "../data/vystup/orez_" + nazov + koncovka_txt
 txt_orez = open(cesta_vystup_txt_orez, "w")
@@ -57,9 +54,6 @@ xls_obs.write("CD\tcas\tsin_elevUhol\tstupne\tSRN1\tSRN_lin1\tSRN2\tSRN_lin2\tXd
 xls_porovnanie.write(
     "CD_eph\tCD_nav\tcas_eph\tcas_nav\tDt\tXeph\tYeph\tZeph\tXvyp\tYvyp\tZvyp\tXroz\tYroz\tZroz\tVektor\n")
 txt_poloha_d.write("Cislo_druzice cas_eph cas_nav Dt X_vyp Y_vyp Z_vyp\n")
-kml.write('''<?xml version="1.0" encoding="UTF-8"?>
-<kml xmlns="http://earth.google.com/kml/2.0">
-<Document>\n''')
 txt_orez.write("ID X Y\n")
 # ###########################################################
 # nacitanie udajov z eph
@@ -164,9 +158,9 @@ while k < len(hodnoty):
         cd_nav = "PG0" + cd_nav
     else:
         cd_nav = "PG" + cd_nav
-    if cd_nav != dr:
-        k = k + 1
-        continue
+        # if cd_nav != dr:
+        # k = k + 1
+        # continue
 
     rok_nav = int(sprava[0].split()[1])  # urcenie datumu spravy
     mes_nav = int(sprava[0].split()[2])
@@ -228,23 +222,24 @@ while k < len(hodnoty):
         l1 = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2))  # priemet druzice do vysky ref.stanice
         l2 = math.sqrt(math.pow(dx, 2) + math.pow(dy, 2) + math.pow(dz, 2))
         a_rad = math.acos(l1 / l2)
-        data.append(cd_nav)
-        data.append(cas_nav)
-        data.append(Dt)
-        data.append(Xd)
-        data.append(Yd)
-        data.append(Zd)
-        data.append(a_rad)
-        data_all.append(data)
-        # if a >= 5 and a <= 30:
-        #    data.append(cd_nav)
-        #    data.append(cas_nav)
-        #    data.append(Dt)
-        #    data.append(Xd)
-        #    data.append(Yd)
-        #    data.append(Zd)
-        #    data.append(a_rad)
-        #    data_all.append(data)
+        a = math.degrees(a_rad)
+        #data.append(cd_nav)
+        #data.append(cas_nav)
+        #data.append(Dt)
+        #data.append(Xd)
+        #data.append(Yd)
+        #data.append(Zd)
+        #data.append(a_rad)
+        #data_all.append(data)
+        if a >= 5 and a <= 30:
+            data.append(cd_nav)
+            data.append(cas_nav)
+            data.append(Dt)
+            data.append(Xd)
+            data.append(Yd)
+            data.append(Zd)
+            data.append(a_rad)
+            data_all.append(data)
         Dt = Dt + interval
         # print k
     k = k + 1
@@ -309,13 +304,6 @@ while len(telo) > 0:
         Ld_rad = math.radians(Ld)  # Longitude     Zemepisna dlzka lambda  x
         B_rad = math.radians(B)
         L_rad = math.radians(L)
-        sigma = math.acos(math.sin(B_rad)*math.sin(Bd_rad) + math.cos(B_rad)*math.cos(Bd_rad)*math.cos(L_rad-Ld_rad))
-        #print sigma
-        d = sigma * r
-        sina = (math.cos(B_rad)/math.sin(sigma))*math.sin(L_rad-Ld_rad)
-        #print sina
-        azimut = math.degrees(math.asin(sina))            #print azimut
-        #print ortodroma
         Azimut2 = modul2.fCalculateAzimuth(X, Y, Xd1, Yd1)
         n = 0
         m = 3
@@ -362,102 +350,25 @@ while len(telo) > 0:
                     "\t" + str(snr2).replace(".", ",") + "\t" + str(snr_lin2).replace(".", ",") + \
                     "\t" + str(Xd1).replace(".", ",") + "\t" + str(Yd1).replace(".", ",") + "\t" + str(Zd1).replace(".",",") + \
                     "\t" + str(Bd).replace(".", ",") + "\t" + str(Ld).replace(".", ",") + "\t" + str(Hd).replace(".",",") + \
-                    "\t" + str(azimut).replace(".",",") + "\t" + str(d).replace(".",",") + "\t" + str(Azimut2).replace(".",",") + \
-                    "\t" + str(psi1).replace(".",",") + "\n"
-            zapis_kml_linia = '''            <Placemark id="feat_''' + str(cd_obs) + '''_''' + str(cas) + '''">
-                <Style id="style''' + str(cd_obs) + "_" + str(cas) + '''">
-                    <LineStyle>
-                        <color>ff4672eb</color>
-                    </LineStyle>
-                </Style>
-                <name>''' + nazov + ''' - ''' + '''druzica ''' + str(cd_obs) + " ; cas: " + str(cas) + '''</name>
-            <styleUrl>#style''' + str(cd_obs) + "_" + str(cas) + '''</styleUrl>
-                <LineString id="geom_''' + str(cd_obs) + "_" + str(cas) + '''">
-                    <coordinates>''' + str(L) + "," + str(B) + "," + str(H) + " " + str(Ld) + "," + str(
-                Bd) + "," + str(Hd) + '''</coordinates>
-                    <altitudeMode>absolute</altitudeMode>
-                </LineString>
-            </Placemark>\n'''
+                    "\t" + str(Azimut2).replace(".",",") + "\t" + str(psi1).replace(".",",") + "\n"
+
             xls_obs.write(zapis)
-            kml.write(zapis_kml_linia)
             zoznam_xyz = [cas, Xd1, Yd1, Zd1]
-            zoznam_blh = [cas, Bd, Ld, Hd]
+            zoznam_blh = [cas, Bd, Ld, Hd, cd_obs, Azimut2]
             zoznam_suradnic_xyz.append(zoznam_xyz)
             zoznam_suradnic_blh.append(zoznam_blh)
             break
 xls_obs.close()
-zapis_kml_bod = '''            <Placemark id="feat_''' + nazov + '''">
-                <name>''' + nazov + '''</name>
-                <Point id="geom_1">
-                    <coordinates>''' + str(L) + "," + str(B) + "," + str(H) + '''</coordinates>
-                    <altitudeMode>clampToGround</altitudeMode>
-                </Point>
-            </Placemark>\n'''
-zapis_kml_konec = '''    </Document>
-    </kml>'''
-kml.write(zapis_kml_bod)
-kml.write(zapis_kml_konec)
-kml.close()
-# maxElevUhol = max(axisXsinElevUhol)  # hodnoty na tvorbu grafu
-# minElevUhol = min(axisXsinElevUhol)
-# maxCas = max(axisXcas)
-# minCas = min(axisXcas)
-# maxSNR1 = max(axisYSNR1)
-# maxSNR2 = max(axisYSNR2)
-# plt.figure(1)
-# plt.plot(axisXelevUhol, axisYSNR1)
-# plt.xlabel('stupne')
-# plt.ylabel('SNR 1')
-# plt.axis([minElevUhol, maxElevUhol, 0, maxSNR1 + 5])
-# plt.grid(True)
-# plt.savefig('SNR1')
-# plt.figure(2)
-# plt.plot(axisXelevUhol, axisYSNR2)
-# plt.xlabel('stupne')
-# plt.ylabel('SNR 2')
-# plt.axis([minElevUhol, maxElevUhol, 0, maxSNR2 + 5])
-# plt.grid(True)
-# plt.savefig('SNR2')
+kruh = kruh.fkruznica(B, L, nazov)
+StanicaDruzica = SHP.fLineShp(zoznam_suradnic_blh, nazov)
+orezanie = priesecnik.fIntersect(kruh, zoznam_suradnic_blh, nazov)
+interval_a = [[80, 100], [160,215]]
+az_zoznam = []
+for i in range(1,len(orezanie)):
+    az = orezanie[i][4]
 
-line = modul2.fLineShp(zoznam_suradnic_xyz, nazov, "xyz")    # vytvorenie shp vrstvy
-line = modul2.fLineShp(zoznam_suradnic_blh, nazov, "blh")
-kruh = test.fKruh(X,Y,Z)
-priesecnikDB = []
-Cx = zoznam_suradnic_xyz[0][1]
-Cy = zoznam_suradnic_xyz[0][2]
-Cz = zoznam_suradnic_xyz[0][3]
-for e in range(len(kruh)):
-    for i in range(len(kruh[0])-1):
-        a = kruh[e][i]
-        b = kruh[e][i+1]
-        Ax = kruh[e][i][1]
-        Ay = kruh[e][i][2]
-        Bx = kruh[e][i+1][1]
-        By = kruh[e][i+1][2]
-        A = [Ax, Ay]
-        B = [Bx, By]
-        for j in range(len(zoznam_suradnic_xyz)-1):
-            idCas = zoznam_suradnic_xyz[j+1][0]
-            Dx = zoznam_suradnic_xyz[j+1][1]
-            Dy = zoznam_suradnic_xyz[j+1][2]
-            Dz = zoznam_suradnic_xyz[j+1][3]
-            C = [Cx, Cy, Cz]
-            D = [Dx, Dy, Dz]
-            priesecnik = modul2.fIntersect(A, B, C, D, idCas)
-            if priesecnik == 0:
-                continue
-            priesecnikDB.append(priesecnik)
-            zapis_orez = str(priesecnik[0]).replace(".", ",") + " " + str(priesecnik[1]).replace(".", ",") + " " + str(priesecnik[2]).replace(".", ",") + "\n"
-            txt_orez.write(zapis_orez)
-#print priesecnikDB
-Bod = [nazov, X, Y, Z]
-priesecnikDB.insert(0,Bod)
-line = modul2.fLineShp(priesecnikDB, nazov, "xyz2")
-txt_orez.close()
-del(j)
-blh2 = []
-for j in range(len(priesecnikDB)):
-    blh = modul2.fXYZ_to_LatLonH(priesecnikDB[j][1], priesecnikDB[j][2], Z)
-    blh1 = [priesecnikDB[j][0], blh[1], blh[0]]
-    blh2.append(blh1)
-line = modul2.fLineShp(blh2, nazov, "blh2")
+    if (az > interval_a[0][0] and az < interval_a[0][1]) or (az > interval_a[1][0] and az < interval_a[1][1]):
+        az_zoznam.append(orezanie[i])
+        print az
+az_zoznam.insert(0,[L, B])
+linia = SHP.fLineClipShp(az_zoznam, nazov)

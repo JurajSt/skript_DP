@@ -1,6 +1,6 @@
 import sys
 import os
-import modul2, SHP, kruh, priesecnik
+import modul2, SHP, kruh, priesecnik, KML
 import math
 import numpy as np
 pi = math.pi
@@ -360,15 +360,18 @@ while len(telo) > 0:
             break
 xls_obs.close()
 kruh = kruh.fkruznica(B, L, nazov)
-StanicaDruzica = SHP.fLineShp(zoznam_suradnic_blh, nazov)
+#StanicaDruzica = SHP.fLineShp(zoznam_suradnic_blh, nazov)
+
 orezanie = priesecnik.fIntersect(kruh, zoznam_suradnic_blh, nazov)
+kml_point = KML.fCreatePointKML(kruh, nazov)
+
 interval_a = [[80, 100], [160,215]]
 az_zoznam = []
 for i in range(1,len(orezanie)):
     az = orezanie[i][4]
-
     if (az > interval_a[0][0] and az < interval_a[0][1]) or (az > interval_a[1][0] and az < interval_a[1][1]):
         az_zoznam.append(orezanie[i])
-        print az
-az_zoznam.insert(0,[L, B])
+
+az_zoznam.insert(0,[L, B, 0, nazov])
+kml_line = KML.fCreateLineKML(az_zoznam,nazov)
 linia = SHP.fLineClipShp(az_zoznam, nazov)

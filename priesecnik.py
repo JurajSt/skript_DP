@@ -73,6 +73,5 @@ def fIntersect(zoznam_kruh, zoznam_suradnic, n):
             zoznamS.append(S)
     zoznamS.insert(0, A)
     liniaOrez = SHP.fLineClipShp(zoznamS, nazov)
-
     txt_priesecnik_blh.close()
     return zoznamS

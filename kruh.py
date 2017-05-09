@@ -64,34 +64,40 @@ def fkruznica(lat, lon, n):         # n je nazov stanice
         zoznambl.append(bl)
         vertex.append(v)
         id = id + 1
-
         #txt_kruh_blh.write(zapis1)
+
     j=0
     while j < 360:
         pocet = zoznambl.count(zoznambl[j])
         if pocet > 1:
             zoznambl.remove(zoznambl[j])
         j = j + 1
-        c = 1
     for i in range(len(zoznambl)):
         azimut = modul2.fCalculateAzimuth(lon, lat, zoznambl[i][0], zoznambl[i][1])
         zoznambl[i].append(azimut)
         if azimut == 0:
             At = "S"
+            zoznambl[i].append(At)
         elif azimut == 90:
             At = "V"
+            zoznambl[i].append(At)
         elif azimut == 180:
             At = "J"
+            zoznambl[i].append(At)
         elif azimut == 270:
             At = "Z"
+            zoznambl[i].append(At)
         elif round(azimut,0)%10 == 0:
             At = int(round(azimut,0))
+            zoznambl[i].append(At)
         else:
             At = 0
+            zoznambl[i].append(At)
         zapis1 = str(id) + " " + str(zoznambl[i][0]).replace(".", ",") + " " + str(zoznambl[i][1]).replace(".", ",") + " " +\
                  str(azimut).replace(".", ",") + " " + str(At) + "\n"
         txt_kruh_blh.write(zapis1)
-
+    zoznambl.insert(0, [lon, lat, 0, n])
+    txt_kruh_blh.write("0" + " " + str(lon).replace(".", ",") + " " + str(lat).replace(".", ",") + " 0 " + n +"\n" )
     cestaSHP = "data/vystup/kruh"
     linia = SHP.fKruhLinia(vertex, nazov, cestaSHP)
     #bodKruh = SHP.fPointShp(zoznambl, nazov)

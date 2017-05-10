@@ -1,5 +1,4 @@
-import os
-import sys
+import RandomColor
 from simplekml import Kml
 def fCreatePointKML(zoznam, n):
     kml = Kml()
@@ -25,7 +24,7 @@ def fCreatePointKML(zoznam, n):
         pnt.style.labelstyle.scale = 1
     kml.save("data/vystup/kruh/" + n + "kruh.kml")
 
-def fCreateLineKML(zoznam, n):
+def fCreateLineKML(zoznam, n, f):
     kml = Kml()
     fol = kml.newfolder(name="spojnica")
     At = zoznam[0][3]
@@ -35,7 +34,12 @@ def fCreateLineKML(zoznam, n):
         At = zoznam[i][3]
         if At == 0:
             continue
+        for data in f:
+            if At == data[1]:
+                farba = data[0]
         Ld = zoznam[i][0]
         Bd = zoznam[i][1]
         pnt = fol.newlinestring(name="{0}".format(At), coords=[(L, B), (Ld,Bd)])
+
+        pnt.style.linestyle.color = farba
     kml.save("data/vystup/kruh/" + n + "spojnica.kml")

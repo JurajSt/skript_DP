@@ -1,6 +1,6 @@
 import sys
 import os
-import modul2, SHP, kruh, priesecnik, KML
+import modul2, SHP, kruh, priesecnik, KML, RandomColor
 import math
 import numpy as np
 pi = math.pi
@@ -304,7 +304,7 @@ while len(telo) > 0:
         Ld_rad = math.radians(Ld)  # Longitude     Zemepisna dlzka lambda  x
         B_rad = math.radians(B)
         L_rad = math.radians(L)
-        Azimut2 = modul2.fCalculateAzimuth(X, Y, Xd1, Yd1)
+        azimut2 = modul2.fCalculateAzimuth(X, Y, Xd1, Yd1)
         n = 0
         m = 3
         for c in range(len(zoznam_druzic) / 3):
@@ -350,28 +350,95 @@ while len(telo) > 0:
                     "\t" + str(snr2).replace(".", ",") + "\t" + str(snr_lin2).replace(".", ",") + \
                     "\t" + str(Xd1).replace(".", ",") + "\t" + str(Yd1).replace(".", ",") + "\t" + str(Zd1).replace(".",",") + \
                     "\t" + str(Bd).replace(".", ",") + "\t" + str(Ld).replace(".", ",") + "\t" + str(Hd).replace(".",",") + \
-                    "\t" + str(Azimut2).replace(".",",") + "\t" + str(psi1).replace(".",",") + "\n"
+                    "\t" + str(azimut2).replace(".",",") + "\t" + str(psi1).replace(".",",") + "\n"
 
             xls_obs.write(zapis)
             zoznam_xyz = [cas, Xd1, Yd1, Zd1]
-            zoznam_blh = [cas, Bd, Ld, Hd, cd_obs, Azimut2]
+            zoznam_blh = [cas, Bd, Ld, Hd, cd_obs, elev_uhol_rad, azimut2]
             zoznam_suradnic_xyz.append(zoznam_xyz)
             zoznam_suradnic_blh.append(zoznam_blh)
             break
 xls_obs.close()
 kruh = kruh.fkruznica(B, L, nazov)
 #StanicaDruzica = SHP.fLineShp(zoznam_suradnic_blh, nazov)
-
 orezanie = priesecnik.fIntersect(kruh, zoznam_suradnic_blh, nazov)
 kml_point = KML.fCreatePointKML(kruh, nazov)
-
 interval_a = [[80, 100], [160,215]]
 az_zoznam = []
 for i in range(1,len(orezanie)):
     az = orezanie[i][4]
     if (az > interval_a[0][0] and az < interval_a[0][1]) or (az > interval_a[1][0] and az < interval_a[1][1]):
-        az_zoznam.append(orezanie[i])
+        elev_uhol_rad = orezanie[i][5]
+        az = math.radians(orezanie[i][6])
+        # vypocet podla very snow depth.....
+        #q = (lambda2*h)/math.sin(elev_uhol_rad)
+        #w = math.pow(lambda2/(2*math.sin(elev_uhol_rad)), 2)
+        #b = math.sqrt(q+w)              # vedlajsia os elipsy
+        #a = b/math.sin(elev_uhol_rad)   # hlavna os elipsy
 
+        n=1
+        d =n*lambda1/2
+        R = h/math.tan(elev_uhol_rad) + (d/math.sin(elev_uhol_rad))/math.tan(elev_uhol_rad)
+        b = math.sqrt(((2*d*h)/math.sin(elev_uhol_rad)) + (math.pow(d/math.sin(elev_uhol_rad),2)))
+        a = b/math.sin(elev_uhol_rad)
+        k = 0
+        st = math.radians(1)      # stupen na radiany
+        ze = []
+        while k <= 2*pi:
+            xi = a * math.cos(k) + R
+            yi = b * math.sin(k)
+            xe = math.sin(az)*xi - math.cos(az)*yi
+            ye = math.sin(az)*yi + math.cos(az)*xi
+            k = k+st
+            zze = [xe, ye]
+            ze.append(zze)
+        orezanie[i].append([a,b])
+        orezanie[i].append(ze)
+        az_zoznam.append(orezanie[i])
 az_zoznam.insert(0,[L, B, 0, nazov])
-kml_line = KML.fCreateLineKML(az_zoznam,nazov)
-linia = SHP.fLineClipShp(az_zoznam, nazov)
+cd_count =[]
+cd_all = []
+cd_ = []
+farba = []
+for i in range(len(az_zoznam)):
+    cd = az_zoznam[i][3]
+    cd_all.append(cd)
+    pocet = cd_count.count(cd)
+    if pocet < 1:
+        cd_count.append(cd)
+        f = RandomColor.FColorLineKML(cd)
+        farba.append(f)
+for i in range(len(cd_count)):
+    cd = cd_count[i]
+    pocet = cd_all.count(cd)
+    cdz = [cd,pocet]
+    cd_.append(cdz)
+cd_sort = sorted(cd_, key=lambda cd: cd[1], reverse=True)
+i = 0
+vybrane_druzice = []
+while i < 5:
+    for j in range(len(az_zoznam)):
+        if cd_sort[i][0] == az_zoznam[j][3]:
+            vybrane_druzice.append(az_zoznam[j])
+    i = i+1
+vybrane_druzice.insert(0,[L, B, 0, nazov])
+print vybrane_druzice[1]
+kml_line = KML.fCreateLineKML(vybrane_druzice, nazov, farba)
+cesta_elipsa = "../data/vystup/orez_" + nazov+ "elipsa" + koncovka_txt
+txt_el = open(cesta_elipsa, "w")
+txt_el.write("X Y\n")
+for i in range(1,len(az_zoznam)):
+    surelipsa = az_zoznam[i][8]
+    for j in range(len(surelipsa)):
+        txt_el.write(str(surelipsa[j][0]).replace(".", ",")+ " " + str(surelipsa[j][1]).replace(".", ",") + "\n")
+    break
+txt_el.close()
+
+cesta_select = "../data/vystup/orez_" + nazov+ "select" + koncovka_txt
+txt_st = open(cesta_select, "w")
+txt_st.write("L B cas cd elev \n")
+for i in range(1,len(vybrane_druzice)):
+    txt_st.write(str(vybrane_druzice[i][0]).replace(".", ",") + " " + str(vybrane_druzice[i][1]).replace(".", ",") + " " +
+                 str(vybrane_druzice[i][2]).replace(".", ",") + " " + str(vybrane_druzice[i][3]).replace(".", ",") + " " +
+                 str(math.degrees(vybrane_druzice[i][5])).replace(".", ",") +"\n")
+txt_st.close()

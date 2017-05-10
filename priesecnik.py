@@ -14,7 +14,8 @@ def fIntersect(zoznam_kruh, zoznam_suradnic, n):
         By = zoznam_suradnic[e+1][2]
         cas = zoznam_suradnic[e+1][0]
         cd = zoznam_suradnic[e+1][4]
-        az = zoznam_suradnic[e+1][5]
+        elev = zoznam_suradnic[e+1][5]
+        az = zoznam_suradnic[e+1][6]
         B = [Bx, By]
         for j in range(len(zoznam_kruh)-1):
             Cx = zoznam_kruh[j][0]
@@ -65,7 +66,9 @@ def fIntersect(zoznam_kruh, zoznam_suradnic, n):
             azimut = modul2.fCalculateAzimuth(Ax, Ay, S[0], S[1])
             S.append(cas)
             S.append(cd)
-            S.append(azimut)
+            S.append(azimut)    # azimut skrateneho bodu
+            S.append(elev)
+            S.append(az)        # azimut druzice
 
             zapis1 = str(S[2]).replace(".", ",") + " " + str(S[0]).replace(".", ",") + " " + str(S[1]).replace(".", ",") + \
                      str(S[3]).replace(".", ",") + str(S[4]).replace(".", ",") + "\n"
